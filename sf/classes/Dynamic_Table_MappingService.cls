@@ -72,20 +72,29 @@ global class Dynamic_Table_MappingService {
             Map<String,String> sfLookupMap = (Map<String,String>)sfObjectsMap.get('sfLookupMap');
         	Map<String,String> dbLookupMap = (Map<String,String>)sfObjectsMap.get('dbLookupMap');
             Map<String, Schema.SObjectField> schemaFieldMap = sobjResult.fields.getMap();
+            List<String> externalIdsList = new List<String>();
             
             for(Object tableData : tableDataMultiList){
                 List<Object> tableDataList = (List<Object>)tableData; 
                 obj = targetType.newSObject();
+                String externalId = null;
                 for(Object mapdata : tableDataList){
+                    
                     Map<String,Object> tableDataMap = (Map<String,Object> )mapdata;
                     String fieldName = (String)tableDataMap.get('fieldName');
                     Object value = tableDataMap.get('fieldValue');
+                    
                     //System.debug('*************************'+(String)mapSfObjectList.get(fieldName));
                     if(schemaFieldMap.get((String)mapSfObjectList.get(fieldName))!=null){
 
-                        if(fieldName.equalsIgnoreCase(uniqueColummName)){      
-                            obj.put('External_Field_Id__c',DbTableName+(String)value);
+                        if(fieldName.equalsIgnoreCase(uniqueColummName)){   
+                            externalId = DbTableName+(String)value;
+                            obj.put('External_Field_Id__c',externalId);
                         } 
+                        
+                        if(fieldName.equalsIgnoreCase('PGRCMPL') && ((String)value).equalsIgnoreCase('Y')){
+                            externalIdsList.add(externalId);
+                        }
                         
                         Schema.DisplayType fieldType = schemaFieldMap.get((String)mapSfObjectList.get(fieldName)).getDescribe().getType();
                         if(value!=null && String.valueOf(value).trim() != ''){
@@ -117,6 +126,9 @@ global class Dynamic_Table_MappingService {
                 upsertDynamicSobject.addSfObject(obj);
             }    
             responseList=upsertDynamicSobject.upsertSobjects();
+			String query = 'select id from '+sfObjectNamesList.get(0).Sf_Table_Name__c+' WHERE External_Field_Id__c IN :externalIdsList';
+            List<SObject> deleteList = Database.query(query);
+			delete deleteList;            
         }catch(Exception e){
             Log__c lg = new Log__c();
             lg.Class_Name__c = 'Dynamic_Table_MappingService';

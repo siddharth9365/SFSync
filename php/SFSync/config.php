@@ -12,7 +12,7 @@ define('DB_PASSWORD','');
 define('DB_NAME','S100030E');
 define('SERVERNAME','PKV-WEB6');
 //define('TABLES',serialize (array ('PRSPATFL' => 'PPTPATID','PRSCLRFL' => 'PCLSKUID','PRSCERTFL' => 'PCEDIV','PRSGRGFL' => 'PGRDIV')));
-define('TABLES',serialize (array(10 => array ('PRSGRGFL' => 'PGRFAB'),20 => array ('PRSCLRFL' => 'PGRFAB'))));
+define('TABLES',serialize (array(10 => array ('PRSGRGFL' => 'PGRFAB'))));
 define('TIMESTAMP',"config_timestamp.txt");
 ?>
 

@@ -1,5 +1,29 @@
 @RestResource(urlMapping='/SBQQDiscountScheduleService/*')
 global class SBQQDiscountScheduleService {
+    
+    //For getting status messages of database
+    public List<Map<String,String>> getDMLStatusMessages(Database.UpsertResult [] cr){
+        Map<String,String> successMap; 
+        List<Map<String,String>> successList=new List<Map<String,String>>();
+        Set<Id> setSuccessIds = new Set<Id>();
+        
+        for(Database.UpsertResult p : cr){
+            successMap = new Map<String,String>();
+            if(p.isSuccess()){
+               // successMap.put('Status', 'success');
+               // successMap.put('SfId', p.getId());
+               // setSuccessIds.add(p.getId());
+            }else{
+                for(Database.Error er : p.getErrors()){
+                    successMap.put('Error ', er.getMessage());
+                }
+                successMap.put('Status', 'Fail');
+                successList.add(successMap);
+            }
+            
+        }
+        return successList;
+    }
 	@HttpPost
     global static void insertAndUpdate(){
         RestRequest req = RestContext.request;
@@ -88,7 +112,13 @@ global class SBQQDiscountScheduleService {
                     failureDiscountTierList.addAll(discountTierList);
                 }
             }
-            upsert finalDiscountTierList;
+            Schema.SObjectField f = SBQQ__DiscountTier__c.Fields.External_Field_Id__c;
+            Database.UpsertResult [] cr = Database.upsert(finalDiscountTierList, f, false);
+            SBQQDiscountScheduleService discountScheduleService = new SBQQDiscountScheduleService();
+            responseList = discountScheduleService.getDMLStatusMessages(cr);
+            Map<String,String> responseMap = new Map<String,String>();
+        	responseMap.put('Status', 'No Failures....');
+        	res.responseBody = RestfulServiceUtils.parseValToJson(responseList.size()==0?new List<Map<String,String>>{responseMap}:responseList);
         }catch(Exception e){
             Log__c lg = new Log__c();
             lg.Class_Name__c = 'SBQQDiscountScheduleService';
