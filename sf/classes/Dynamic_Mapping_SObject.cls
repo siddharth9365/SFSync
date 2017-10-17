@@ -4,6 +4,8 @@ public class Dynamic_Mapping_SObject {
     List<Greige__c> greigeList = new List<Greige__c>();
     List<Performance_Certification__c> performanceCertificationList = new List<Performance_Certification__c>();
     List<Finish__c> finishList = new List<Finish__c>();
+    List<User> userList = new List<User>();
+    List<Account> accountList = new List<Account>();
     
     String sfObjectName;
     
@@ -26,6 +28,10 @@ public class Dynamic_Mapping_SObject {
             performanceCertificationList.add((Performance_Certification__c)sfObjectData);
         }else if(this.sfObjectName == 'Finish__c'){
             finishList.add((Finish__c)sfObjectData);
+        }else if(this.sfObjectName == 'User'){
+            userList.add((User)sfObjectData);
+        }else if(this.sfObjectName == 'Account'){
+            accountList.add((Account)sfObjectData);
         }
     }
     
@@ -78,9 +84,7 @@ public class Dynamic_Mapping_SObject {
             Database.UpsertResult [] cr = Database.upsert(productObjectsList, f, false);
             List<String> productIds = new List<String>();
             for(Product2 p : productObjectsList){
-
                 if(p.Pattern_Lookup__r!=null){
-
                     productIds.add(p.Pattern_Lookup__r.External_Field_Id__c);
                 }
                 
@@ -112,6 +116,42 @@ public class Dynamic_Mapping_SObject {
         }else if(this.sfObjectName.equalsIgnoreCase('Finish__c')){
             Schema.SObjectField f = Finish__c.Fields.External_Field_Id__c;
             Database.UpsertResult [] cr = Database.upsert(finishList, f, false);
+            successList=getDMLStatusMessages(cr);
+        }else if(this.sfObjectName.equalsIgnoreCase('User')){
+            Schema.SObjectField f = User.Fields.External_Field_Id__c;
+            Database.UpsertResult [] cr = Database.upsert(userList, f, false);
+            successList=getDMLStatusMessages(cr);
+        }else if(this.sfObjectName.equalsIgnoreCase('Account')){
+            Schema.SObjectField f = Account.Fields.External_Field_Id__c;
+            //Database.UpsertResult [] cr = Database.upsert(accountList, f, false);
+            Set<String> user1Ids = new Set<String>();
+            //List<String> user2Ids = new List<String>();
+            for(Account tempAccount : accountList){
+                System.debug('user1Ids' + tempAccount.Owner.External_Field_Id__c);
+                if(tempAccount.Owner != null){
+                    user1Ids.add(tempAccount.Owner.External_Field_Id__c);
+                }
+                if(tempAccount.PCSSLS2__r != null){
+                    //tempAccount.PCSSLS2__c = null;
+                    user1Ids.add(tempAccount.PCSSLS2__r.External_Field_Id__c);
+                }
+            }
+            List<User> userList = [SELECT External_Field_Id__c,Id FROM USER WHERE External_Field_Id__c IN :user1Ids];
+            //List<User> user2List = [SELECT External_Field_Id__c,Id FROM USER WHERE External_Field_Id__c IN :user2Ids];
+            Map<String,String> userMap = new Map<String,String>();
+            for(User user1 : userList){
+                userMap.put(user1.External_Field_Id__c, user1.Id);
+            }
+            
+            for(Account accountTemp : accountList){
+                System.debug('owner id' + accountTemp.OwnerId);
+                accountTemp.OwnerId = userMap.get(accountTemp.Owner.External_Field_Id__c)!= null?userMap.get(accountTemp.Owner.External_Field_Id__c):UserInfo.getUserId();
+               	accountTemp.Owner = null;
+                
+                accountTemp.PCSSLS2__c = userMap.get(accountTemp.PCSSLS2__r.External_Field_Id__c)!= null?userMap.get(accountTemp.PCSSLS2__r.External_Field_Id__c):null;
+                accountTemp.PCSSLS2__r = null;
+            }
+            Database.UpsertResult [] cr = Database.upsert(accountList, f, false);
             successList=getDMLStatusMessages(cr);
         }else {
             System.debug('No table info found');

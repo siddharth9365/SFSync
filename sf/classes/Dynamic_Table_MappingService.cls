@@ -86,13 +86,13 @@ global class Dynamic_Table_MappingService {
                     
                     //System.debug('*************************'+(String)mapSfObjectList.get(fieldName));
                     if(schemaFieldMap.get((String)mapSfObjectList.get(fieldName))!=null){
-
+						System.debug('************* '+fieldName);
                         if(fieldName.equalsIgnoreCase(uniqueColummName)){   
                             externalId = DbTableName+(String)value;
                             obj.put('External_Field_Id__c',externalId);
                         } 
                         
-                        if(fieldName.equalsIgnoreCase('PGRCMPL') && ((String)value).equalsIgnoreCase('Y')){
+                        if(fieldName.equalsIgnoreCase('STATUS') && ((String)value).equalsIgnoreCase('D')){
                             externalIdsList.add(externalId);
                         }
                         
@@ -110,6 +110,7 @@ global class Dynamic_Table_MappingService {
                             }else if(fieldType  == Schema.DisplayType.REFERENCE) {
                                 sObject sObj = Schema.getGlobalDescribe().get(sfLookupMap.get(fieldName)).newSObject();
                                 sObj.put('External_Field_Id__c',dbLookupMap.get(fieldName)+(String)value);
+                                
                                 obj.putSObject(schemaFieldMap.get((String)mapSfObjectList.get(fieldName)), sObj);
                                 //obj.putSobject(schemaFieldMap.get((String)mapSfObjectList.get(fieldName)),string.valueOf(value));
                             }else{
@@ -126,7 +127,8 @@ global class Dynamic_Table_MappingService {
                 upsertDynamicSobject.addSfObject(obj);
             }    
             responseList=upsertDynamicSobject.upsertSobjects();
-			String query = 'select id from '+sfObjectNamesList.get(0).Sf_Table_Name__c+' WHERE External_Field_Id__c IN :externalIdsList';
+            System.debug('list of ids : '+externalIdsList);
+			String query = 'select id from '+sfObjectNamesList.get(0).Sf_Table_Name__c+' WHERE External_Field_Id__c IN :externalIdsList and External_Field_Id__c != null';
             List<SObject> deleteList = Database.query(query);
 			delete deleteList;            
         }catch(Exception e){

@@ -103,7 +103,7 @@ function getArray($key,$value,$frequency,$JSON){
     $newTime = $newTimestamp -> format("His");
     //echo 'new date'.$newDate.' new Time'.$newTime;
     if(isset($oldJSON[$frequency])){
-        $query = 'SELECT * FROM PRSPROD.S100030E.SLSFORCE.'.$key.' WHERE (PGRMNDT BETWEEN '.$oldDate.' AND '.$newDate.') AND (PGRMNTM BETWEEN '.$oldTime.' AND '.$newTime.')';
+        $query = 'SELECT * FROM PRSPROD.S100030E.SLSFORCE.'.$key.' WHERE (MNTDT BETWEEN '.$oldDate.' AND '.$newDate.') AND ((MNTTM BETWEEN '.$oldTime.' AND '.$newTime.') OR MNTDT < $newDate)';
     }else{
        $query = 'SELECT * FROM PRSPROD.S100030E.SLSFORCE.'.$key;
     }
