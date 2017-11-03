@@ -49,6 +49,8 @@ foreach ($finalTables as $identifier => $tables) {
             echo '<br>';
             //echo $reqcurl;
             echo 'JSON Response -- > '.$reqResponse;
+            date_default_timezone_set('America/New_York');
+            writeLog("####".date('d-m-Y H:i:s')." : {$key},{$identifier},{".$reqResponse."}");
         }
     }
 

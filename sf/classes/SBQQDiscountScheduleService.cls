@@ -50,6 +50,10 @@ global class SBQQDiscountScheduleService {
                 }     
             }
             System.debug('name List : '+namesList);
+            Map<String,String> nameMap = new Map<String,String>();
+            for(String name : namesList){
+                nameMap.put(name,null);
+            }
             List<SBQQ__DiscountSchedule__c> dicountList = [SELECT Id,name from SBQQ__DiscountSchedule__c where name in :namesList];
             Map<String,SBQQ__DiscountSchedule__c> dcmap = new Map<String,SBQQ__DiscountSchedule__c>();
             for(SBQQ__DiscountSchedule__c d : dicountList){
@@ -58,12 +62,15 @@ global class SBQQDiscountScheduleService {
              System.debug(dcmap);
             List<SBQQ__DiscountTier__c> finalDiscountTierList = new List<SBQQ__DiscountTier__c>();
             List<SBQQ__DiscountTier__c> failureDiscountTierList = new List<SBQQ__DiscountTier__c>();
+            
             for(Object tableData : tableDataMultiList){
                 List<Object> tableDataList = (List<Object>)tableData; 
                 //obj = targetType.newSObject();
                 List<SBQQ__DiscountTier__c> discountTierList = new List<SBQQ__DiscountTier__c>();
                 SBQQ__DiscountSchedule__c dicountSchedule = new SBQQ__DiscountSchedule__c();
                 SBQQ__DiscountTier__c discountTier;
+                String MNTDT;
+                String MNTTM;
                 for(Object mapdata : tableDataList){
                     Map<String,Object> tableDataMap = (Map<String,Object> )mapdata;
                     String fieldName = (String)tableDataMap.get('fieldName');
@@ -75,38 +82,50 @@ global class SBQQDiscountScheduleService {
                         discountTier = new SBQQ__DiscountTier__c();
                         discountTier.Name = 'B';
                         discountTier.SBQQ__Discount__c = Double.valueOf(value);	
-						discountTier.External_Field_Id__c = dicountSchedule.Id + 'B';
+                        String scheduleId = dicountSchedule!=null?dicountSchedule.Id+'B':null;
+						discountTier.External_Field_Id__c = scheduleId;
                         discountTierList.add(discountTier);
                     }else if(fieldName.equalsIgnoreCase('PRCDSCC')){
                         discountTier = new SBQQ__DiscountTier__c();
                         discountTier.Name = 'C';
                         discountTier.SBQQ__Discount__c = Double.valueOf(value);
-                        discountTier.External_Field_Id__c = dicountSchedule.Id + 'C';
+                        String scheduleId = dicountSchedule!=null?dicountSchedule.Id+'C':null;
+						discountTier.External_Field_Id__c = scheduleId;
                         discountTierList.add(discountTier);
                     }else if(fieldName.equalsIgnoreCase('PRCDSCD')){
                         discountTier = new SBQQ__DiscountTier__c();
                         discountTier.Name = 'D';
                         discountTier.SBQQ__Discount__c = Double.valueOf(value);
-                        discountTier.External_Field_Id__c = dicountSchedule.Id + 'D';
+                        String scheduleId = dicountSchedule!=null?dicountSchedule.Id+'D':null;
+						discountTier.External_Field_Id__c = scheduleId;
                         discountTierList.add(discountTier);
                     }else if(fieldName.equalsIgnoreCase('PRCDSCE')){
                         discountTier = new SBQQ__DiscountTier__c();
                         discountTier.Name = 'E';
                         discountTier.SBQQ__Discount__c = Double.valueOf(value);
-						discountTier.External_Field_Id__c = dicountSchedule.Id + 'E';
+						String scheduleId = dicountSchedule!=null?dicountSchedule.Id+'E':null;
+						discountTier.External_Field_Id__c = scheduleId;
                         discountTierList.add(discountTier);
                     }else if(fieldName.equalsIgnoreCase('PRCDSCF')){
                         discountTier = new SBQQ__DiscountTier__c();
                         discountTier.Name = 'F';
                         discountTier.SBQQ__Discount__c = Double.valueOf(value);
-                        discountTier.External_Field_Id__c = dicountSchedule.Id + 'F';
+                        String scheduleId = dicountSchedule!=null?dicountSchedule.Id+'F':null;
+						discountTier.External_Field_Id__c = scheduleId;
                         discountTierList.add(discountTier);
-                    } 
+                    }else if(fieldName.equalsIgnoreCase('MNTDT')) {
+                        MNTDT = String.valueOf(value);
+                    }else if(fieldName.equalsIgnoreCase('MNTTM')) {
+                        MNTTM = String.valueOf(value);
+                    }
                 }
                 if(dicountSchedule!=null){
                     for(SBQQ__DiscountTier__c d :discountTierList){
-                    	d.SBQQ__Schedule__c = dicountSchedule.Id;
+                        d.SBQQ__Schedule__c = dicountSchedule.Id;
+                        d.MNTDT__c = MNTDT;
+                        d.MNTTM__c = MNTTM;
                 	}
+                    nameMap.remove(dicountSchedule.name);
                     finalDiscountTierList.addAll(discountTierList);
                 }else{
                     failureDiscountTierList.addAll(discountTierList);
@@ -117,7 +136,13 @@ global class SBQQDiscountScheduleService {
             SBQQDiscountScheduleService discountScheduleService = new SBQQDiscountScheduleService();
             responseList = discountScheduleService.getDMLStatusMessages(cr);
             Map<String,String> responseMap = new Map<String,String>();
-        	responseMap.put('Status', 'No Failures....');
+            if(failureDiscountTierList.size() > 0){
+                for(String name : nameMap.keySet()){
+                   responseMap.put(name, 'Fail');
+                }
+            }else{
+                responseMap.put('Status', 'No Failures....');
+            }
         	res.responseBody = RestfulServiceUtils.parseValToJson(responseList.size()==0?new List<Map<String,String>>{responseMap}:responseList);
         }catch(Exception e){
             Log__c lg = new Log__c();

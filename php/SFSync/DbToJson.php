@@ -9,7 +9,7 @@ function getData($sql,$tableName,$exIdFieldName){
     //mysql_select_db($dbname)or die("Connection Failed");
     $connectionInfo = array("UID"=>$username, "PWD"=>$password);
     $conn = sqlsrv_connect( $servername, $connectionInfo); 
-    ini_set('memory_limit', '256M');
+    ini_set('memory_limit', '-1');
     if( $conn === false ) {
         echo "connection fail ";
         die( print_r( sqlsrv_errors(), true));
@@ -61,7 +61,7 @@ function getData($sql,$tableName,$exIdFieldName){
         $colums =array();
         foreach($row as $key => $value) {
         // print "$key = $value <br />";
-            $data = array('fieldName' => trim($key),'fieldValue' => trim($value));
+            $data = array('fieldName' => utf8_encode(trim($key)),'fieldValue' => utf8_encode(trim($value)));
             array_push($colums,$data);
             //$data = array();
             //echo 'fieldname =>'.$key.' | fieldvalue =>'.$value;
@@ -103,7 +103,7 @@ function getArray($key,$value,$frequency,$JSON){
     $newTime = $newTimestamp -> format("His");
     //echo 'new date'.$newDate.' new Time'.$newTime;
     if(isset($oldJSON[$frequency])){
-        $query = 'SELECT * FROM PRSPROD.S100030E.SLSFORCE.'.$key.' WHERE (MNTDT BETWEEN '.$oldDate.' AND '.$newDate.') AND ((MNTTM BETWEEN '.$oldTime.' AND '.$newTime.') OR MNTDT < $newDate)';
+        $query = 'SELECT * FROM PRSPROD.S100030E.SLSFORCE.'.$key.' WHERE (MNTDT BETWEEN '.$oldDate.' AND '.$newDate.') AND ((MNTTM BETWEEN '.$oldTime.' AND '.$newTime.') OR MNTDT < '.$newDate.')';
     }else{
        $query = 'SELECT * FROM PRSPROD.S100030E.SLSFORCE.'.$key;
     }
@@ -112,6 +112,7 @@ function getArray($key,$value,$frequency,$JSON){
 }
 
 function getTables(){
+    date_default_timezone_set('America/New_York');
     $newJSON = array();
     $finalTablesArray = array();
     $tables = unserialize(TABLES);
@@ -160,5 +161,10 @@ function getTables(){
         $returnArray  = array('oldJSON' => $oldJSON,'newJSON' => $newJSON,'finalTables' => $finalTablesArray);
         
         return $returnArray;
+}
+
+function writeLog($log){
+    $logfile = 'logs/log_'.date('d-M-Y').'.log';
+    file_put_contents($logfile, $log."\n\n",FILE_APPEND);
 }
 ?>

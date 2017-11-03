@@ -5,9 +5,15 @@ global class Dynamic_Table_MappingService {
     global static Id getRecordTypeId(Schema.SObjectType targetType,String tableName){
         Id recordTypeId;
         if(tableName.equalsIgnoreCase('PRSPATFL')){
-            recordTypeId=[SELECT Id FROM RecordType WHERE DeveloperName = 'Product_Pattern' limit 1].Id; 
+            recordTypeId=[SELECT Id FROM RecordType WHERE DeveloperName = 'Product_Pattern_Woven_Finished_Good' limit 1].Id; 
         }else if(tableName.equalsIgnoreCase('PRSCLRFL')){           
             recordTypeId=[SELECT Id FROM RecordType WHERE DeveloperName = 'Product_Color' limit 1].Id; 
+        }else if(tableName.equalsIgnoreCase('PRSFINFL')){
+            recordTypeId=[SELECT Id FROM RecordType WHERE DeveloperName = 'Finish' limit 1].Id;
+        }else if(tableName.equalsIgnoreCase('PRSBRAND')){
+            recordTypeId=[SELECT Id FROM RecordType WHERE DeveloperName = 'Brand' limit 1].Id;
+        }else if(tableName.equalsIgnoreCase('PRSHOTEL')){
+            recordTypeId=[SELECT Id FROM RecordType WHERE DeveloperName = 'Hotel_Company' limit 1].Id;
         }
         
         return recordTypeId;
@@ -105,6 +111,8 @@ global class Dynamic_Table_MappingService {
                                 obj.put(schemaFieldMap.get((String)mapSfObjectList.get(fieldName)),DateTime.newInstance(datevalue.year(),datevalue.month(),datevalue.day()).format('yyyy-MM-dd'));
                             }else if(fieldType  == Schema.DisplayType.Integer){
                                 obj.put(schemaFieldMap.get((String)mapSfObjectList.get(fieldName)),Integer.valueOf(value));
+                            }else if(fieldType  == Schema.DisplayType.CURRENCY){
+                                obj.put(schemaFieldMap.get((String)mapSfObjectList.get(fieldName)),Double.valueOf(value));
                             }else if(fieldType  == Schema.DisplayType.Double){
                                 obj.put(schemaFieldMap.get((String)mapSfObjectList.get(fieldName)),Double.valueOf(value));
                             }else if(fieldType  == Schema.DisplayType.REFERENCE) {
