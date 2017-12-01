@@ -19,7 +19,7 @@ public class Dynamic_Mapping_SObject {
         if(this.sfObjectName == 'Product2'){
             Product2 p = (Product2)sfObjectData;
             if(p.PCLSKUID__c!=null){
-                p.Name = p.PCLCLR__c;
+                p.Name = p.PCLNAME__c;
             }
             productObjectsList.add((Product2)sfObjectData);
         }else if(this.sfObjectName == 'Greige__c'){
@@ -87,7 +87,7 @@ public class Dynamic_Mapping_SObject {
                     }
                     
                     for(Product2 p : productObjectsList){
-                        p.Name = productMap.get(p.Pattern_Lookup__r.External_Field_Id__c)!=null?productMap.get(p.Pattern_Lookup__r.External_Field_Id__c)+'-'+p.PCLCLR__c:p.PCLCLR__c;
+                        p.Name = productMap.get(p.Pattern_Lookup__r.External_Field_Id__c)!=null?productMap.get(p.Pattern_Lookup__r.External_Field_Id__c)+'-'+p.PCLNAME__c:p.PCLNAME__c;
                     }
                 }
                 Database.upsert(productObjectsList, f, false);
@@ -168,10 +168,10 @@ public class Dynamic_Mapping_SObject {
             for(User user1 : userList){
                 userMap.put(user1.External_Field_Id__c, user1.Id);
             }
-            
+            Id userId = [SELECT id from User where name = 'Adam Tooter'].Id;
             for(Account accountTemp : accountList){
                 System.debug('owner id' + accountTemp.OwnerId);
-                accountTemp.OwnerId = userMap.get(accountTemp.Owner.External_Field_Id__c)!= null?userMap.get(accountTemp.Owner.External_Field_Id__c):UserInfo.getUserId();
+                accountTemp.OwnerId = userMap.get(accountTemp.Owner.External_Field_Id__c)!= null?userMap.get(accountTemp.Owner.External_Field_Id__c):userId!=null?userId:UserInfo.getUserId();
                	accountTemp.Owner = null;
                 
                 accountTemp.PCSSLS2__c = userMap.get(accountTemp.PCSSLS2__r.External_Field_Id__c)!= null?userMap.get(accountTemp.PCSSLS2__r.External_Field_Id__c):null;

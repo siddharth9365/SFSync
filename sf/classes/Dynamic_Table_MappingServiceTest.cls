@@ -211,7 +211,7 @@ public class Dynamic_Table_MappingServiceTest{
         RestContext.request = req;
         RestContext.response = res;
         Test.startTest();
-        Dynamic_Table_MappingService.getRecordTypeId(Schema.getGlobalDescribe().get('product2'), 'PRSPATFL');
+        Dynamic_Table_MappingService.getRecordTypeId('PRSPATFL');
         Dynamic_Table_MappingService.insertAndUpdate();
         //Dynamic_Mapping_SObject upsertDynamicSobject = new Dynamic_Mapping_SObject('product2');
         Test.stopTest();
@@ -229,7 +229,7 @@ public class Dynamic_Table_MappingServiceTest{
         Map<String,String> responseMap = new Map<String,String>();
         responseMap.put('Status', 'No Failures....');
         Test.startTest();
-        Dynamic_Table_MappingService.getRecordTypeId(Schema.getGlobalDescribe().get('product2'), 'PRSPATFL');
+        Dynamic_Table_MappingService.getRecordTypeId('PRSPATFL');
         Dynamic_Table_MappingService.insertAndUpdate();
         //Dynamic_Mapping_SObject upsertDynamicSobject = new Dynamic_Mapping_SObject('product2');
         Test.stopTest();
@@ -256,7 +256,7 @@ public class Dynamic_Table_MappingServiceTest{
         
         
         Test.startTest();
-        Dynamic_Table_MappingService.getRecordTypeId(Schema.getGlobalDescribe().get('AccountId'), 'Color');
+        Dynamic_Table_MappingService.getRecordTypeId('Color');
         Test.stopTest();
     }
     
@@ -279,7 +279,7 @@ public class Dynamic_Table_MappingServiceTest{
         dyTbleMap.Sf_Table_Name__c = 'AccountId';
         insert dyTbleMap; 
         Test.startTest();
-        Dynamic_Table_MappingService.getRecordTypeId(Schema.getGlobalDescribe().get('AccountId'), 'Greige');
+        Dynamic_Table_MappingService.getRecordTypeId('Greige');
         Test.stopTest();
     }
     

@@ -2,7 +2,7 @@
 global class Dynamic_Table_MappingService {
     
     //For getting record type id of table
-    global static Id getRecordTypeId(Schema.SObjectType targetType,String tableName){
+    global static Id getRecordTypeId(String tableName){
         Id recordTypeId;
         if(tableName.equalsIgnoreCase('PRSPATFL')){
             recordTypeId=[SELECT Id FROM RecordType WHERE DeveloperName = 'Product_Pattern_Woven_Finished_Good' limit 1].Id; 
@@ -10,13 +10,22 @@ global class Dynamic_Table_MappingService {
             recordTypeId=[SELECT Id FROM RecordType WHERE DeveloperName = 'Product_Color' limit 1].Id; 
         }else if(tableName.equalsIgnoreCase('PRSFINFL')){
             recordTypeId=[SELECT Id FROM RecordType WHERE DeveloperName = 'Finish' limit 1].Id;
-        }else if(tableName.equalsIgnoreCase('PRSBRAND')){
+        }else if(tableName.equalsIgnoreCase('PRSBRAND') ){
             recordTypeId=[SELECT Id FROM RecordType WHERE DeveloperName = 'Brand' limit 1].Id;
-        }else if(tableName.equalsIgnoreCase('PRSHOTEL')){
+        }else if(tableName.equalsIgnoreCase('PRSHOTEL') ){
             recordTypeId=[SELECT Id FROM RecordType WHERE DeveloperName = 'Hotel_Company' limit 1].Id;
         }
         
         return recordTypeId;
+    }
+    
+    global static Map<String,Id> getAccountRecordTypeId(){
+        List<RecordType> recordTypeList = [SELECT Id,Name,DeveloperName FROM RecordType WHERE SobjectType = 'account'];   
+        Map<String,Id> recordTypeMap = new Map<String,Id>();
+        for(RecordType recordType : recordTypeList){
+            recordTypeMap.put(recordType.Name,recordType.Id);
+        }
+        return recordTypeMap;
     }
     
     //for getting DB to SF fields mapping
@@ -46,7 +55,7 @@ global class Dynamic_Table_MappingService {
             dbLookupMap.put(dynamicTemp.Db_Field_Name__c, dynamicTemp.Db_Lookup_Name__c);
         }
         
-		sfObjectsMap.put('sfLookupMap', sfLookupMap); 
+        sfObjectsMap.put('sfLookupMap', sfLookupMap); 
         sfObjectsMap.put('dbLookupMap', dbLookupMap);
         
         return sfObjectsMap;
@@ -66,17 +75,18 @@ global class Dynamic_Table_MappingService {
             List<Dynamic_Table_Mapping__c> sfObjectNamesList = getDynamic_Table_MappingListByDB(DbTableName);
             
             Schema.SObjectType targetType = Schema.getGlobalDescribe().get(sfObjectNamesList.get(0).Sf_Table_Name__c);       
-                 
+            
             Schema.DescribeSObjectResult sobjResult = targetType.getDescribe();
             SObject obj;   
             String className = sobjResult.getName();
             Dynamic_Mapping_SObject upsertDynamicSobject = new Dynamic_Mapping_SObject(className);
             
-            Id recordTypeId = getRecordTypeId(targetType, DbTableName);
+            Id recordTypeId = getRecordTypeId(DbTableName);
+            Map<String,Id> recordTypeMap = getAccountRecordTypeId();
             Map<String,Object> mapSfObjectList = getDbToSfFieldMapping(sfObjectNamesList);
             Map<String,Object> sfObjectsMap = getLookupFields(sfObjectNamesList);
             Map<String,String> sfLookupMap = (Map<String,String>)sfObjectsMap.get('sfLookupMap');
-        	Map<String,String> dbLookupMap = (Map<String,String>)sfObjectsMap.get('dbLookupMap');
+            Map<String,String> dbLookupMap = (Map<String,String>)sfObjectsMap.get('dbLookupMap');
             Map<String, Schema.SObjectField> schemaFieldMap = sobjResult.fields.getMap();
             List<String> externalIdsList = new List<String>();
             
@@ -92,7 +102,7 @@ global class Dynamic_Table_MappingService {
                     
                     //System.debug('*************************'+(String)mapSfObjectList.get(fieldName));
                     if(schemaFieldMap.get((String)mapSfObjectList.get(fieldName))!=null){
-						System.debug('************* '+fieldName);
+                        System.debug('************* '+fieldName);
                         if(fieldName.equalsIgnoreCase(uniqueColummName)){   
                             externalId = DbTableName+(String)value;
                             obj.put('External_Field_Id__c',externalId);
@@ -129,16 +139,32 @@ global class Dynamic_Table_MappingService {
                     }
                     
                 }
-                if(recordTypeId!=null){
-                	obj.put('recordtypeid', recordTypeId);
+                if('PRSCUSTFL'.equalsIgnoreCase(DbTableName)){
+                    String pcsclass = String.valueOf(obj.get('PCSCLAS__c')); 
+                    String recordType;
+                    if(pcsclass == null || pcsclass == 'Purchaser' || pcsclass == 'Designer' || pcsclass == 'Purchasing Company'){
+                        recordType = recordTypeMap.get('Purchaser / Designer');
+                    }else if(pcsclass == 'Fabricator'){
+                        recordType = recordTypeMap.get('Fabricator');
+                    }else if(pcsclass == 'Brand'){
+                        recordType = recordTypeMap.get('Brand');
+                    }else if(pcsclass == 'Hotel Property Direct'){
+                        recordType = recordTypeMap.get('Hotel Company');
+                    }else if(pcsclass == 'Ownership'){
+                        recordType = recordTypeMap.get('Ownership Group');
+                    }
+
+                    obj.put('recordtypeid', recordType);
+                }else if(recordTypeId!=null){
+                    obj.put('recordtypeid', recordTypeId);
                 }   
                 upsertDynamicSobject.addSfObject(obj);
             }    
             responseList=upsertDynamicSobject.upsertSobjects();
             System.debug('list of ids : '+externalIdsList);
-			String query = 'select id from '+sfObjectNamesList.get(0).Sf_Table_Name__c+' WHERE External_Field_Id__c IN :externalIdsList and External_Field_Id__c != null';
+            String query = 'select id from '+sfObjectNamesList.get(0).Sf_Table_Name__c+' WHERE External_Field_Id__c IN :externalIdsList and External_Field_Id__c != null';
             List<SObject> deleteList = Database.query(query);
-			delete deleteList;            
+            delete deleteList;            
         }catch(Exception e){
             Log__c lg = new Log__c();
             lg.Class_Name__c = 'Dynamic_Table_MappingService';
